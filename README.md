@@ -13,9 +13,7 @@ NOTE:
 - HTML → PDF rendering is outside FIPS boundary
 - Any TLS or crypto inside Chromium is non-FIPS
 - LibreOffice uses NSS and is not validated against FIPS 140-3
-
-Summary:
-1. Document conversion (.docx → PDF, etc.) is outside FIPS boundary
+- Document conversion (.docx → PDF, etc.) is outside FIPS boundary
 
 
 **Show provider is active**
