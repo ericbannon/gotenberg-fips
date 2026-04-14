@@ -1,4 +1,3 @@
-# Stage 1: donor for FIPS/OpenSSL bits
 FROM cgr.dev/chainguard-private/go-fips:latest-dev AS fips
 
 USER root

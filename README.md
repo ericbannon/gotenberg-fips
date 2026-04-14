@@ -148,7 +148,7 @@ curl -k \
   -o encrypted.pdf
   ```
 
-  ## Fips validation test for TLS
+  ## FIPS validation test for TLS
 
 **Weak TLS versions un-approved**
   ```
