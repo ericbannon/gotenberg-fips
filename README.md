@@ -1,4 +1,4 @@
-# swimlane-gotenberg-fips
+# gotenberg-fips
 The encryption endpoint uses qpdf, which links to OpenSSL (libcrypto.so.3). We verified that OpenSSL is operating with the Chainguard FIPS provider and enforcing approved algorithms (e.g., MD5 is rejected). Therefore, PDF encryption operations performed through this endpoint are executed within the OpenSSL FIPS boundary.
 
 Validated on gotenberg-fips:latest:
