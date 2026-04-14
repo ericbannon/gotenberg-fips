@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envoy-gotenberg
+  namespace: gotenberg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: envoy-gotenberg
+  template:
+    metadata:
+      labels:
+        app: envoy-gotenberg
+    spec:
+      containers:
+        - name: envoy
+          image: 452336408843.dkr.ecr.us-west-2.amazonaws.com/envoy-fips:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-c"
+            - "/etc/envoy/envoy.yaml"
+            - "--log-level"
+            - "info"
+          ports:
+            - containerPort: 8443
+            - containerPort: 9901
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+              readOnly: true
+            - name: envoy-certs
+              mountPath: /certs
+              readOnly: true
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: envoy-config
+        - name: envoy-certs
+          secret:
+            secretName: envoy-mtls-certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy-gotenberg
+  namespace: gotenberg
+spec:
+  selector:
+    app: envoy-gotenberg
+  ports:
+    - name: https
+      port: 8443
+      targetPort: 8443
+    - name: admin
+      port: 9901
+      targetPort: 9901

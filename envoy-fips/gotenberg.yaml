@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gotenberg
+  namespace: gotenberg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gotenberg
+  template:
+    metadata:
+      labels:
+        app: gotenberg
+    spec:
+      containers:
+        - name: gotenberg
+          image: 452336408843.dkr.ecr.us-west-2.amazonaws.com/gotenberg-fips:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: ""
+            - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+              value: ""
+            - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+              value: ""
+            - name: OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+              value: ""
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gotenberg
+  namespace: gotenberg
+spec:
+  selector:
+    app: gotenberg
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000

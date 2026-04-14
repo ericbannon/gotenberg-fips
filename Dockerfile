@@ -6,7 +6,8 @@ USER root
 RUN apk update && apk add --no-cache \
     openssl \
     openssl-config-fipshardened \
-    openssl-provider-fips-3.4.0
+    openssl-provider-fips-3.4.0 \
+    openssl-fips-test
 
 COPY openssl-fips.cnf /etc/ssl/openssl-fips.cnf
 

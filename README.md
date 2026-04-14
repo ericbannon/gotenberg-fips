@@ -8,6 +8,9 @@ Validated on gotenberg-fips:latest:
 - Gotenberg 8.30.1 starts successfully
 - qpdf binary links to libqpdf.so.30
 - libqpdf.so.30 links to libcrypto.so.3
+- qpdf-backed PDF encryption succeeded through Envoy
+- Resulting encrypted output was a valid PDF
+- mTLS boundary validated at proxy layer
 
 NOTE: 
 - HTML → PDF rendering is outside FIPS boundary
@@ -15,6 +18,7 @@ NOTE:
 - LibreOffice uses NSS and is not validated against FIPS 140-3
 - Document conversion (.docx → PDF, etc.) is outside FIPS boundary
 
+## Verification Tests
 
 **Show provider is active**
 ```
@@ -34,6 +38,16 @@ Error setting digest
 docker run --rm --entrypoint /usr/bin/openssl gotenberg-fips:latest sha256 /etc/hosts
 SHA2-256(/etc/hosts)= e4489d054e2349bbda6c8900d82d4cd2a12bbbde827e0a4a6df80497bec490ad
 ```
+
+## Pass/Fail Script
+
+**Verify all checks pass**:
+```
+chmod +x verify-gotenberg-fips.sh
+./verify-gotenberg-fips.sh
+```
+
+### Local Tests (Optional)
 
 **Test for lbcrypto requirements**:
 
@@ -77,4 +91,95 @@ docker run --rm -v $(pwd)/rootfs:/work -w /work \
  0x0000000000000001 (NEEDED)             Shared library: [ld-linux-aarch64.so.1]
  ```
 
+# Proxy-TLS FIPS 
 
+We deployed Envoy in front of Gotenberg and enforced mutual TLS at the service boundary. Requests without a valid client certificate fail during the TLS handshake. We also validated TLS policy enforcement by confirming that a weak TLS 1.2 cipher is rejected while a strong AES-GCM/ECDHE TLS 1.2 cipher succeeds. HTML-to-PDF conversion and qpdf-backed PDF encryption both function correctly through this protected path.
+
+## Deploy & Test with Envoy Proxy
+
+```
+kubectl create secret generic envoy-mtls-certs -n gotenberg \
+  --from-file=server.crt \
+  --from-file=server.key \
+  --from-file=ca.crt
+```
+
+```
+kubectl create namespace gotenberg
+```
+
+### Deploy Envoy
+
+```
+kubectl apply -f envoy-configmap.yaml
+
+kubectl apply -f gotenberg.yaml
+
+kubectl apply -f envoy.yaml
+```
+
+**Check Rollout Status**:
+```
+kubectl get pods -n gotenberg
+kubectl get svc -n gotenberg
+kubectl rollout status deploy/gotenberg -n gotenberg
+kubectl rollout status deploy/envoy-gotenberg -n gotenberg
+```
+
+## Test pdf backend ecrypt path through Envoy
+```
+cat > index.html <<'EOF'
+<!doctype html>
+<html>
+  <body>
+    <h1>Hello through Envoy mTLS</h1>
+  </body>
+</html>
+EOF
+
+curl -k \
+  --cert ./client.crt \
+  --key ./client.key \
+  --cacert ./ca.crt \
+  -F 'files=@./test.pdf;type=application/pdf' \
+  -F 'userPassword=secret123' \
+  -F 'ownerPassword=owner123' \
+  https://127.0.0.1:8443/forms/pdfengines/encrypt \
+  -o encrypted.pdf
+  ```
+
+  ## Fips validation test for TLS
+
+**Weak TLS versions un-approved**
+  ```
+  curl -k \
+  --tls-max 1.0 \
+  --cert ./client.crt \
+  --key ./client.key \
+  https://127.0.0.1:8443
+
+  ```
+
+  **Unapproved Cipher**
+  ```
+  curl -vk \
+  --tls-max 1.2 \
+  --tlsv1.2 \
+  --ciphers AES128-SHA \
+  --cert ./client.crt \
+  --key ./client.key \
+  --cacert ./ca.crt \
+  https://127.0.0.1:8443/health
+  ```
+
+  **Approved Cipher**
+  ```
+  curl -vk \
+  --tls-max 1.2 \
+  --tlsv1.2 \
+  --ciphers ECDHE-RSA-AES256-GCM-SHA384 \
+  --cert ./client.crt \
+  --key ./client.key \
+  --cacert ./ca.crt \
+  https://127.0.0.1:8443/health
+  ```
