@@ -18,6 +18,11 @@ NOTE:
 - LibreOffice uses NSS and is not validated against FIPS 140-3
 - Document conversion (.docx → PDF, etc.) is outside FIPS boundary
 
+<p align="center">
+  <img src="assets/fips-arch.png" alt="FIPS Architecture" width="700"/>
+</p>
+<p align="center"><em>FIPS boundary with Envoy mTLS and qpdf/OpenSSL path</em></p>
+
 ## Verification Tests
 
 **Show provider is active**
