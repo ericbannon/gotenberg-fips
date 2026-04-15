@@ -10,21 +10,33 @@ RUN apk update && apk add --no-cache \
 
 COPY openssl-fips.cnf /etc/ssl/openssl-fips.cnf
 
-# Stage 2: final runtime stays the working Gotenberg image
 FROM cgr.dev/chainguard-private/gotenberg:latest
 
 USER root
 
-# Copy likely-needed OpenSSL/FIPS assets from the donor image.
 COPY --from=fips /etc/ssl/ /etc/ssl/
 COPY --from=fips /usr/lib/ /usr/lib/
 COPY --from=fips /lib/ /lib/
 COPY --from=fips /usr/bin/openssl /usr/bin/openssl
 
-ENV PATH="/usr/bin:/usr/local/bin:/bin:${PATH}"
 ENV OPENSSL_CONF=/etc/ssl/openssl-fips.cnf
+ENV PATH="/usr/bin:/usr/local/bin:/bin:${PATH}"
+ENV HOME="/home/gotenberg"
+ENV XDG_CONFIG_HOME="/home/gotenberg/.config"
+ENV XDG_CACHE_HOME="/home/gotenberg/.cache"
 
-# allow arbitrary UID (like 1001) to run
-# RUN chmod -R g=u /usr/bin /usr/local/bin /etc/ssl /tmp || true
+RUN mkdir -p \
+    /home/gotenberg \
+    /home/gotenberg/tmp \
+    /home/gotenberg/tls \
+    /home/gotenberg/.config \
+    /home/gotenberg/.cache \
+    /tmp && \
+    chown -R 1001:1001 /home/gotenberg /tmp && \
+    chmod -R 0775 /home/gotenberg /tmp
 
-USER nonroot
+WORKDIR /home/gotenberg
+
+ENTRYPOINT ["/usr/bin/gotenberg"]
+
+USER 1001:1001

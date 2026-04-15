@@ -1,9 +1,8 @@
 gotenberg:
   enabled: true
   name: gotenberg
-  replicaCount: 1
 
-  image: <ACCOUNT>.dkr.ecr.<REGION>.amazonaws.com/gotenberg-fips:latest
+  image: 452336408843.dkr.ecr.us-west-2.amazonaws.com/gotenberg-fips:latest
   imagePullPolicy: Always
 
   service:
@@ -12,29 +11,47 @@ gotenberg:
     annotations: {}
     labels: {}
 
+  serviceAccountName: ""
+
+  podAnnotations: {}
+  labels: {}
+  resources: {}
+
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+  tolerations: []
+  affinity: {}
+
   securityContext:
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: false
     runAsNonRoot: true
-    runAsUser: 65532
+    runAsUser: 1001
     seccompProfile:
       type: RuntimeDefault
+
+  command:
+    - gotenberg
 
   args:
     - "--chromium-deny-list=^file:///[^tmp].*|169.254.169.254.*"
     - "--api-timeout=120s"
     - "--api-port=3500"
+    - "--pdfengines-disable-routes=true"
     - "--webhook-disable=true"
     - "--prometheus-disable-collect=true"
     - "--prometheus-disable-route-logging=true"
 
-  podAnnotations: {}
-  labels: {}
-  resources: {}
-  nodeSelector:
-    kubernetes.io/arch: amd64
-  tolerations: []
-  affinity: {}
-
 chrome:
   enabled: false
+  name: chrome
+
+  image: selenium/standalone-chrome:143.0
+  imagePullPolicy: IfNotPresent
+
+  service:
+    name: chrome
+    port: 4444
+    annotations: {}
+    labels: {}
