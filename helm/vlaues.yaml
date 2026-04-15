@@ -1,0 +1,40 @@
+gotenberg:
+  enabled: true
+  name: gotenberg
+  replicaCount: 1
+
+  image: <ACCOUNT>.dkr.ecr.<REGION>.amazonaws.com/gotenberg-fips:latest
+  imagePullPolicy: Always
+
+  service:
+    name: sw-gotenberg
+    port: 3500
+    annotations: {}
+    labels: {}
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 65532
+    seccompProfile:
+      type: RuntimeDefault
+
+  args:
+    - "--chromium-deny-list=^file:///[^tmp].*|169.254.169.254.*"
+    - "--api-timeout=120s"
+    - "--api-port=3500"
+    - "--webhook-disable=true"
+    - "--prometheus-disable-collect=true"
+    - "--prometheus-disable-route-logging=true"
+
+  podAnnotations: {}
+  labels: {}
+  resources: {}
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  tolerations: []
+  affinity: {}
+
+chrome:
+  enabled: false

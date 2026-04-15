@@ -21,6 +21,10 @@ COPY --from=fips /usr/lib/ /usr/lib/
 COPY --from=fips /lib/ /lib/
 COPY --from=fips /usr/bin/openssl /usr/bin/openssl
 
+ENV PATH="/usr/bin:/usr/local/bin:/bin:${PATH}"
 ENV OPENSSL_CONF=/etc/ssl/openssl-fips.cnf
+
+# allow arbitrary UID (like 1001) to run
+# RUN chmod -R g=u /usr/bin /usr/local/bin /etc/ssl /tmp || true
 
 USER nonroot
